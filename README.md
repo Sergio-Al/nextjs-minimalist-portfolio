@@ -37,6 +37,7 @@ Built with next.js, [shadcn/ui](https://ui.shadcn.com/).
 
 5. Open the [Config file](./src/data/resume.tsx) and make changes
 
-# License
+# Code Credits
 
-Licensed under the [MIT license](https://github.com/dillionverma/portfolio/blob/main/LICENSE.md).
+## Base Template
+Code adapted from [dillionverma/portfolio](https://github.com/dillionverma/portfolio/blob/main/LICENSE.md).
