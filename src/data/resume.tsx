@@ -22,7 +22,7 @@ export const DATA = {
 
     // Programming Languages
     "Typescript",
-    "JavaScript", 
+    "JavaScript",
     "Go",
     "Java",
     "C++",
@@ -44,6 +44,7 @@ export const DATA = {
     "Docker Swarm",
     "Kubernetes",
     "Portainer",
+    "Kong",
 
     // AI & Automation
     "Artificial Intelligence",
@@ -184,34 +185,33 @@ export const DATA = {
   ],
   //TODO add more projects, those are just examples
   projects: [
-    // {
-    //   title: "Chat Collect",
-    //   href: "https://chatcollect.com",
-    //   dates: "Jan 2024 - Feb 2024",
-    //   active: true,
-    //   description:
-    //     "With the release of the [OpenAI GPT Store](https://openai.com/blog/introducing-the-gpt-store), I decided to build a SaaS which allows users to collect email addresses from their GPT users. This is a great way to build an audience and monetize your GPT API usage.",
-    //   technologies: [
-    //     "Next.js",
-    //     "Typescript",
-    //     "PostgreSQL",
-    //     "Prisma",
-    //     "TailwindCSS",
-    //     "Stripe",
-    //     "Shadcn UI",
-    //     "Magic UI",
-    //   ],
-    //   links: [
-    //     {
-    //       type: "Website",
-    //       href: "https://chatcollect.com",
-    //       icon: <Icons.globe className="size-3" />,
-    //     },
-    //   ],
-    //   image: "",
-    //   video:
-    //     "https://pub-72acd541d99f4d32b35ac387f462301e.r2.dev/portfolio-test.mov",
-    // },
+    {
+      title: "GraphQL Backend",
+      href: "https://github.com/Sergio-Al/nest-graphql-library",
+      dates: "Jan 2025 - Feb 2025",
+      active: true,
+      description:
+        "I created a GraphQL API for a library management system. It includes user authentication, book management, and borrowing books.",
+      technologies: [
+        "NestJS",
+        "GraphQL",
+        "TypeORM",
+        "PostgreSQL",
+        "Docker",
+        "Docker Compose",
+        "JWT",
+      ],
+      links: [
+        {
+          type: "Source",
+          href: "https://github.com/Sergio-Al/nest-graphql-library",
+          icon: <Icons.github className="size-3" />,
+        },
+      ],
+      image: "",
+      video:
+        "https://pub-72acd541d99f4d32b35ac387f462301e.r2.dev/graph-ql-demo.mov",
+    },
     // {
     //   title: "Magic UI",
     //   href: "https://magicui.design",
