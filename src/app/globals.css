@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,6 +35,16 @@
       --ring: 0 0% 3.9%;
 
       --radius: 0.5rem;
+
+      /* Warm bronze accent, matched to the CV. 30 55% 38% keeps ~5:1 contrast on white. */
+      --brand: 30 55% 38%;
+
+      --font-display: 'Instrument Serif', 'Times New Roman', serif;
+      --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+      --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+      --shadow-dock: 0 0 0 1px rgba(0,0,0,.03), 0 2px 4px rgba(0,0,0,.05), 0 12px 24px rgba(0,0,0,.05);
     }
 
     .dark {
@@ -63,6 +75,8 @@
       --border: 0 0% 14.9%;
       --input: 0 0% 14.9%;
       --ring: 0 0% 83.1%;
+
+      --brand: 34 62% 64%;
     }
   }
 
@@ -71,8 +85,39 @@
       @apply border-border;
     }
     body {
+      font-family: var(--font-sans);
       @apply bg-background text-foreground;
     }
+  }
+
+  /* Semantic type roles from the design system */
+  .ds-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
+  .ds-h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+  .ds-italic {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+  }
+  .ds-eyebrow {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .ds-meta {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
   }
 
   h3 code {

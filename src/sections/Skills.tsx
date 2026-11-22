@@ -1,25 +1,36 @@
 import BlurFade from "@/components/magicui/blur-fade";
-import { Badge } from "@/components/ui/badge";
 
 export default function Skills({
   DATA,
-  BLUR_FADE_DELAY
+  BLUR_FADE_DELAY,
 }: {
   DATA: {
-    skills: string[];
+    skillGroups: { label: string; items: string[] }[];
   };
   BLUR_FADE_DELAY: number;
 }) {
   return (
     <section id="skills">
-      <div className="flex min-h-0 flex-col gap-y-3">
+      <div className="flex min-h-0 flex-col">
         <BlurFade delay={BLUR_FADE_DELAY * 9}>
-          <h2 className="text-xl font-bold">Skills</h2>
+          <h2 className="mb-4 text-[1.375rem] font-semibold tracking-tight">
+            Skills
+          </h2>
         </BlurFade>
-        <div className="flex flex-wrap gap-1">
-          {DATA.skills.map((skill, id) => (
-            <BlurFade key={skill} delay={BLUR_FADE_DELAY * 10 + id * 0.05}>
-              <Badge key={skill}>{skill}</Badge>
+        <div className="flex flex-col">
+          {DATA.skillGroups.map((group, id) => (
+            <BlurFade
+              key={group.label}
+              delay={BLUR_FADE_DELAY * 10 + id * 0.04}
+            >
+              <div className="flex items-baseline gap-5 border-t border-border py-3">
+                <span className="w-[7.75rem] flex-none font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground pt-px">
+                  {group.label}
+                </span>
+                <span className="text-[0.9rem] leading-relaxed text-foreground">
+                  {group.items.join("  ·  ")}
+                </span>
+              </div>
             </BlurFade>
           ))}
         </div>

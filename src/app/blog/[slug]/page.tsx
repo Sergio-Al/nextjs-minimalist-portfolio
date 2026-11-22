@@ -88,16 +88,17 @@ export default async function Blog({
           }),
         }}
       />
-      <h1 className="title font-medium text-2xl tracking-tighter max-w-[650px]">
+      <h1 className="font-serif font-normal leading-[1.05] tracking-tight text-[clamp(2rem,7vw,3rem)] max-w-[40rem]">
         {post.metadata.title}
       </h1>
-      <div className="flex justify-between items-center mt-2 mb-8 text-sm max-w-[650px]">
+      <div className="flex justify-between items-center mt-2.5 text-sm max-w-[40rem]">
         <Suspense fallback={<p className="h-5" />}>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="font-mono text-xs tabular-nums text-muted-foreground">
             {formatDate(post.metadata.publishedAt)}
           </p>
         </Suspense>
       </div>
+      <div className="my-6 h-px bg-border max-w-[40rem]" />
       <article
         className="prose dark:prose-invert"
         dangerouslySetInnerHTML={{ __html: post.source }}

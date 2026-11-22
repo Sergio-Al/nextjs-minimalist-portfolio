@@ -21,6 +21,11 @@ const config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
+        serif: ["var(--font-display)", ...fontFamily.serif],
+        mono: ["var(--font-mono)", ...fontFamily.mono],
+      },
+      boxShadow: {
+        dock: "var(--shadow-dock)",
       },
       colors: {
         border: "hsl(var(--border))",
@@ -28,6 +33,7 @@ const config = {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        brand: "hsl(var(--brand) / <alpha-value>)",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
