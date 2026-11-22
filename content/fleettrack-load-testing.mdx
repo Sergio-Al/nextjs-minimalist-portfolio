@@ -1,0 +1,126 @@
+---
+title: "Load-testing a real-time GPS pipeline with 1,000 drivers"
+publishedAt: "2026-11-22"
+summary: "What 1,000 simulated delivery drivers taught me about Kafka, batching, and the gap between fast and durable."
+---
+
+FleetTrack is a real-time tracking system I built for delivery fleets, with La Paz, Bolivia as its home city. Every driver's phone sends a GPS position every few seconds, and a supervisor watches the whole fleet move on a live map: who is on route, which customer is next, how far away they are, and when they arrive. The system detects arrivals on its own, when a vehicle enters the customer's geofence.
+
+The design target was **1,000 drivers** sending positions every 5 seconds. A diagram can't tell you whether a system holds that. A load test can, so this post covers how I tested it, what the numbers mean, and the bug the tests found that the happy path never would have.
+
+## The pipeline
+
+A GPS position takes this path:
+
+1. The phone sends a fix to **Traccar**, an open-source GPS server that decodes device protocols.
+2. Traccar forwards it to a webhook on my **NestJS** tracking service.
+3. The webhook publishes it to the **Kafka** topic `gps.positions` (6 partitions, keyed by device) and responds.
+4. A consumer **enriches** each position: which driver it belongs to, their active route, the next visit, distance and ETA, and whether they just entered or left a customer's geofence.
+5. The result fans out to **Redis** (latest position per driver), **TimescaleDB** (route history) and a **WebSocket** push to every dashboard watching.
+
+Kafka sits in the middle on purpose. The webhook only has to get the position into the log; everything slow happens after it, at the consumer's pace. If the consumer falls behind or restarts, positions wait in Kafka instead of being dropped at the door.
+
+## Step zero: the load test didn't run
+
+My first attempt to measure anything failed before it started. An audit of the project turned up three problems in the test setup itself:
+
+- The combined scenario imported functions the individual scripts didn't export.
+- The seed script that creates the 1,000 test drivers failed against a partial unique index (`ON CONFLICT (device_id)` can't target an index with a `WHERE` clause unless you repeat it).
+- The error metric included the latency check, so a request that succeeded but took 201 ms counted as a failure. That makes the error rate measure two things at once, and it can fail a run that was actually fine.
+
+None of this is exciting, but it's the step people skip. A load test is code, and it needs the same review as the code it tests.
+
+## Fixing the hot path first
+
+The same audit looked at what the consumer does per position. The answer was too much, one step at a time: about six sequential database round-trips per message, and a Kafka consumer that, with default settings, processed one partition at a time. With six partitions, five sat idle while one worked.
+
+I started with the changes that cost the least:
+
+- **Consume partitions concurrently.** KafkaJS has a `partitionsConsumedConcurrently` option; setting it to 6 lets each partition progress independently, so a slow message on one doesn't block the others.
+- **Fan out in parallel.** Writes to Redis, TimescaleDB and the WebSocket bridge run together with `Promise.allSettled`, so one slow destination doesn't hold up the rest, and a failure is reported by name instead of failing the whole message.
+- **Batch the history writes.** Instead of one TimescaleDB insert per position, rows are buffered and flushed every second or every 100 rows.
+
+Keep that last change in mind. It comes back later.
+
+## The test
+
+I used [k6](https://k6.io/). Each virtual user plays one GPS device (`LOAD0001` to `LOAD1000`) and posts a position to the webhook every 5 seconds, wandering around central La Paz. The load ramps up in stages, holds at the target, then ramps down:
+
+```js
+stages: [
+  { duration: '30s', target: 100 },   // ramp to 100 drivers
+  { duration: '60s', target: 500 },   // ramp to 500
+  { duration: '60s', target: 1000 },  // ramp to 1,000
+  { duration: '5m',  target: 1000 },  // hold 1,000 drivers
+  { duration: '30s', target: 0 },     // ramp down
+],
+thresholds: {
+  http_req_duration: ['p(95)<200', 'p(99)<500'],
+  http_req_failed: ['rate<0.01'],
+},
+```
+
+At full load that's about 200 positions per second, held for five minutes. The thresholds are the pass/fail line: 95% of requests under 200 ms, 99% under 500 ms, and fewer than 1% failures.
+
+## The results
+
+Everything ran on my laptop, an Apple M1 with 16 GB, with the whole stack in Docker Desktop:
+
+- **76,304** position requests
+- **3.7 ms** average response time
+- **8.7 ms** at p95 and **16.2 ms** at p99
+- **0%** failed requests
+
+That's more than 20 times under the p95 threshold, on a laptop.
+
+## What that number does and doesn't mean
+
+It's easy to put "8.7 ms" on a slide and let people assume it means GPS-to-map. It doesn't.
+
+The webhook responds as soon as the position is published to Kafka. So 8.7 ms measures how fast the system **accepts and queues** a position. It doesn't include enrichment, the database writes or the WebSocket push. The test also posts straight to the webhook, skipping Traccar.
+
+That's still the right number for this endpoint. The thing that must never slow down is the front door; if it does, devices start retrying and the problem grows. But whether the rest of the pipeline keeps up is a different question, and the signal for it is **consumer lag**: how far the consumer is behind the newest message in Kafka. Lag near zero means it's keeping up. Lag that only grows means it isn't, however fast the webhook answers.
+
+The other half of the target, 500 supervisors watching the map at once over WebSockets, has its own k6 script. I don't have a saved run of it yet, so I'm not claiming it.
+
+## The bug the happy path hid
+
+Load tests check that a system is fast while everything works. I also wanted to know what happens when something breaks, so I wrote a recovery test: publish 1,000 positions directly to Kafka, interrupt the tracking service in different ways, restart it, and count how many positions end up in TimescaleDB.
+
+**Consumer stopped before the positions arrive:** pass. While the service was down, Kafka held all 1,000 messages (the lag grew to exactly 1,000). After the restart, the consumer resumed from its last committed position and all 1,000 rows were written. Lag was back to zero about 30 seconds after the restart, most of that the app booting.
+
+**Consumer killed halfway through:** fail. With `SIGKILL` at 40% progress, **100 positions were lost**. With a polite `SIGTERM`, the kind Docker sends on a normal stop or redeploy, **41 were lost**.
+
+The cause was the batching from earlier. The consumer buffers rows in memory and flushes them every second, but KafkaJS commits the offset as soon as the message handler returns. So Kafka marks a position as done while it's still sitting in the buffer. Kill the process at that moment and the position is gone: Kafka won't send it again, and it never reached the database. `SIGTERM` loses rows too, because the app doesn't enable NestJS shutdown hooks, so the code that flushes the buffer on shutdown never runs.
+
+Two things did work. Every message that hadn't been committed was delivered again after the restart, and the few that had already been written were ignored by `ON CONFLICT (time, driver_id) DO NOTHING`, so no duplicate rows. And the other destinations (Redis, the latest-position table, the enriched topic) are written before the commit, so they weren't affected. The loss window is small: at most the last second, or the last 100 positions, before an abrupt stop. But it's real, and it happens on every ordinary redeploy.
+
+The fix is to commit only after the data is safe:
+
+```ts
+// 1. Run the shutdown hook that flushes the buffer.
+app.enableShutdownHooks();
+
+// 2. Only commit offsets for messages whose rows are flushed.
+//    KafkaJS auto-commit only commits *resolved* offsets, so stop it
+//    from resolving the whole batch on its own.
+await consumer.run({
+  eachBatchAutoResolve: false,
+  eachBatch: async ({ batch, resolveOffset, commitOffsetsIfNecessary }) => {
+    for (const message of batch.messages) await enrich(message);
+    await flushTimescaleBuffer();          // rows are durable now...
+    for (const message of batch.messages) resolveOffset(message.offset);
+    await commitOffsetsIfNecessary();      // ...so it's safe to commit
+  },
+});
+```
+
+That change is next on my list, with the recovery test as its acceptance check.
+
+## What I took away
+
+- **Test the test first.** My first three problems were all in the load-test setup, not the system.
+- **Be precise about what a number measures.** "8.7 ms to accept a position" is true and useful. "8.7 ms GPS-to-map" would be false, and the difference matters to whoever reads it.
+- **Every optimization moves a guarantee.** Batching made the hot path cheaper and quietly moved the moment a position is actually saved. I only found that by testing what happens when things break.
+
+The code, the k6 scripts and the raw results are in the [FleetTrack repository](https://github.com/Sergio-Al/nest-react-cdc-map-tracking).
