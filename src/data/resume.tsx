@@ -267,6 +267,35 @@ export const DATA = {
       video: "/project-fleettrack.mp4",
     },
     {
+      title: "Hybrid Decisions",
+      href: "https://github.com/Sergio-Al/react-bpmn-dmn-demo",
+      dates: "Sep 2026 - Today",
+      active: true,
+      featured: true,
+      description:
+        "A decision engine that pairs fixed business rules with AI judgment. GoRules ZEN derives hard facts from CRM data, Jev (TypeSafe's AI model) scores what the data can't state for sure, like a customer's switching risk, and a policy table turns both into an action that a BPMN process carries out. The app runs the same customer with rules only and with Jev, explains why the answers differ, and draws the executed path on the diagram.",
+      technologies: [
+        "React",
+        "Ant Design",
+        "bpmn-js",
+        "bpmn-engine",
+        "GoRules ZEN",
+        "Fastify",
+        "TypeScript",
+        "Jev",
+      ],
+      links: [
+        {
+          type: "Source",
+          href: "https://github.com/Sergio-Al/react-bpmn-dmn-demo",
+          icon: <Icons.github className="size-3" />,
+        },
+      ],
+      // Guided tour of the CRM showcase in dark mode (Jev in mock mode), 1.2x speed.
+      image: "/project-hybrid-decisions.jpg",
+      video: "/project-hybrid-decisions.mp4",
+    },
+    {
       title: "ARCH/IO",
       href: "https://arch-io-xi.vercel.app",
       dates: "2025 - Today",
