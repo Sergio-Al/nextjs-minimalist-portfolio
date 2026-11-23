@@ -268,7 +268,7 @@ export const DATA = {
     },
     {
       title: "Hybrid Decisions",
-      href: "https://github.com/Sergio-Al/react-bpmn-dmn-demo",
+      href: "https://hybrid-decisions.vercel.app",
       dates: "Sep 2026 - Today",
       active: true,
       featured: true,
@@ -285,6 +285,11 @@ export const DATA = {
         "Jev",
       ],
       links: [
+        {
+          type: "Live demo",
+          href: "https://hybrid-decisions.vercel.app",
+          icon: <Icons.globe className="size-3" />,
+        },
         {
           type: "Source",
           href: "https://github.com/Sergio-Al/react-bpmn-dmn-demo",
