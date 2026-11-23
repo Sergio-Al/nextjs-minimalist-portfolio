@@ -4,7 +4,7 @@ import { HomeIcon, NotebookIcon } from "lucide-react";
 export const DATA = {
   name: "Sergio Alejandro",
   initials: "SA",
-  url: "https://google.com",
+  url: "https://nextjs-minimalist-portfolio-two.vercel.app",
   location: "La Paz, BO",
   locationLink: "https://www.google.com/maps/place/sanfrancisco",
   role: "Technical Lead · AI & Data Platforms",
